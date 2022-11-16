@@ -34,7 +34,7 @@ __all__ = ['main', 'char2angqn', 'interpret_econf', 'klechkowski']
 
 def main():
     """Compute atomic DFT results for a series of elements."""
-    for atnum in range(1, 19):
+    for atnum in [11,14,22]:
         plot_atom(atnum, 0)
 
 
@@ -64,7 +64,14 @@ def plot_atom(atnum: float, atcharge: float):
     print("Condition number of the overlap   {:8.1e}".format(evals_olp[-1] / evals_olp[0]))
 
     energies, eps_orbs_u = scf_atom(atnum, occups, grid, basis)
-
+    #print(eps_orbs_u)
+    #print mini eigenvalue files
+    eigenval_path = 'tinyEIGENVAL_'+str(atnum) + '.txt'
+    with open(eigenval_path,'w') as f:
+        for orbital in range(len(eps_orbs_u)):
+            line = str(eps_orbs_u[orbital][0])+'\n'
+            f.write(line)
+    
     # Construct the spin-summed density
     rho = build_rho(occups, eps_orbs_u, grid, basis)
 
@@ -106,17 +113,22 @@ def plot_atom(atnum: float, atcharge: float):
          fr"$E_{{\mathrm{{KS}}}}$ = {energies[0]:.2f} $\mathrm{{E_h}}$" "\n"
          fr"-$\epsilon_N$ = {-eps_homo:.2f} $\mathrm{{E_h}}$"),
         ha="right", va="top", transform=ax.transAxes)
-    ax.text(1, 0.5, SYMBOLS[atnum], ha="right", va="top", transform=ax.transAxes, fontsize=28)
-    ax.semilogy(grid.points, rho_core / 2, "k-", alpha=0.25)
-    ax.semilogy(grid.points, rho_beta, "-", color="C0", lw=3, alpha=1.0)
-    ax.semilogy(grid.points, rho_alpha, "-", color="C1", alpha=1.0)
-    ax.semilogy(grid.points, rho, "k:", color="C7")
+    ax.text(1, 0.5, SYMBOLS[atnum], ha="right", va="top", transform=ax.transAxes, fontsize=18)
+    #ax.semilogy(grid.points, rho_core / 2, "m-", alpha=0.25)
+    #ax.semilogy(grid.points, rho_beta, "-", color="b", lw=3, alpha=1.0)
+    #ax.semilogy(grid.points, rho_alpha, "-", color="k", alpha=1.0)
+    #ax.semilogy(grid.points, rho, "k:", color="")
+    ax.plot(grid.points,rho_core/2, label = 'core')
+    ax.plot(grid.points,rho, label = 'total')
+    #ax.plot(grid.points,rho_beta)
     ax.set_xlabel(r"Distance [$\mathrm{a_0}$]")
     ax.set_ylabel(r"Density [$1/\mathrm{a_0}^3$]")
-    ax.set_ylim(1e-4, 1e4)
-    ax.set_xlim(0, 6)
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
+    ax.legend(loc=2, prop={'size': 5})
+    ax.set_xlim(0,0.5)
+    #ax.set_ylim(1e-4, 1e4)
+    #ax.set_xlim(0, 6)
+    #ax.spines['right'].set_visible(False)
+    #ax.spines['top'].set_visible(False)
     fig.tight_layout(pad=0.3)
     fig.savefig("rho_z{:03d}_{}.png".format(atnum, '_'.join(econf.split())), dpi=300)
     plt.close(fig)
